@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tvTitleGPS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/provider_gps"
+        android:textSize="18sp"></TextView>
+
+    <TextView
+        android:id="@+id/tvStatusGPS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/status_gps"
+        android:textSize="14sp"></TextView>
+
+    <TextView
+        android:id="@+id/tvLocationGPS"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"></TextView>
+
+    <TextView
+        android:id="@+id/tvTitleNet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/provider_network"
+        android:textSize="18sp"></TextView>
+
+    <TextView
+        android:id="@+id/tvStatusNet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/status_network"
+        android:textSize="14sp"></TextView>
+
+    <TextView
+        android:id="@+id/tvLocationNet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"></TextView>
+
+    <Button
+        android:id="@+id/btnLocationSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onClickLocationSettings"
+        android:text="@string/location_settings"></Button>
+
+    <Button
+        android:id="@+id/btnGetGeo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onClickGetGeo"
+        android:text="Получить координаты" />
+
+    <TextView
+        android:id="@+id/tvCurrGeo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="tvCurrGeo"
+        android:textSize="24sp" />
+
+</LinearLayout>
