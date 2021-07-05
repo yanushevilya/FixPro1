@@ -6,6 +6,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,144 +15,93 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
 
-    TextView tvStatusGPS;
-    TextView tvLocationGPS;
-    String locationGPS;
-    TextView tvStatusNet;
-    TextView tvLocationNet;
-    String locationNet;
-    TextView tvCurrGeo;
+    private TextView tvCurrGeo;
+    private Button btnGetGeo;
 
     private LocationManager locationManager;
 
+    private static final long MINIMUM_DISTANCE_CHANGE_FOR_UPDATES = 1; // in Meters
+    private static final long MINIMUM_TIME_BETWEEN_UPDATES = 1000; // in Milliseconds
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tvStatusGPS = (TextView) findViewById(R.id.tvStatusGPS);
-        tvLocationGPS = (TextView) findViewById(R.id.tvLocationGPS);
-        tvStatusNet = (TextView) findViewById(R.id.tvStatusNet);
-        tvLocationNet = (TextView) findViewById(R.id.tvLocationNet);
+
         tvCurrGeo = (TextView) findViewById(R.id.tvCurrGeo);
+        btnGetGeo = (Button) findViewById(R.id.btnGetGeo);
 
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         checkLocationPermission();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
+            locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    MINIMUM_TIME_BETWEEN_UPDATES,
+                    MINIMUM_DISTANCE_CHANGE_FOR_UPDATES,
+                    new MyLocationListener());
+        }
+
     }
 
-    // перед тем как юзер сможет взаимодействовать с Активити - включаем слушателя на провайдеров получения координат
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+    protected void showCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000 * 10, 10, locationListener);
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000 * 10, 10, locationListener);
-            checkEnabled();
+            if (location != null) {
+                String message = String.format(
+                        "Current Location \n Longitude: %1$s \n Latitude: %2$s",
+                        location.getLongitude(), location.getLatitude()
+                );
+                Toast.makeText(MainActivity.this, message,
+                        Toast.LENGTH_LONG).show();
+            }
         }
     }
 
-    // когда Активити не активно - отключаем слушателя
-    @Override
-    protected void onPause() {
-        super.onPause();
-        locationManager.removeUpdates(locationListener);
-    }
+    private class MyLocationListener implements LocationListener {
 
-    // сам Слушатель
-    private LocationListener locationListener = new LocationListener() {
-
-        // новые данные о местоположении
-        @Override
         public void onLocationChanged(Location location) {
-            showLocation(location);
+            String message = String.format(
+                    "New Location \n Longitude: %1$s \n Latitude: %2$s",
+                    location.getLongitude(), location.getLatitude()
+            );
+            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
         }
 
-        @Override
-        public void onProviderDisabled(String provider) {
-            checkEnabled();
+        public void onStatusChanged(String s, int i, Bundle b) {
+            Toast.makeText(MainActivity.this, "Provider status changed",
+                    Toast.LENGTH_LONG).show();
         }
 
-        @Override
-        public void onProviderEnabled(String provider) {
-            checkEnabled();
-            if (ContextCompat.checkSelfPermission(new MainActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                showLocation(locationManager.getLastKnownLocation(provider));
-            }
-
+        public void onProviderDisabled(String s) {
+            Toast.makeText(MainActivity.this,
+                    "Provider disabled by the user. GPS turned off",
+                    Toast.LENGTH_LONG).show();
         }
 
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            if (provider.equals(LocationManager.GPS_PROVIDER)) {
-                tvStatusGPS.setText("Status: " + String.valueOf(status));
-            } else if (provider.equals(LocationManager.NETWORK_PROVIDER)) {
-                tvStatusNet.setText("Status: " + String.valueOf(status));
-            }
+        public void onProviderEnabled(String s) {
+            Toast.makeText(MainActivity.this,
+                    "Provider enabled by the user. GPS turned on",
+                    Toast.LENGTH_LONG).show();
         }
-    };
 
-    private void showLocation(Location location) {
-        if (location == null)
-            return;
-        if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
-            tvLocationGPS.setText(formatLocation(location));
-            locationGPS = formatLocation(location);
-        } else if (location.getProvider().equals(
-                LocationManager.NETWORK_PROVIDER)) {
-            tvLocationNet.setText(formatLocation(location));
-            locationNet = formatLocation(location);
-        }
     }
-
-    private void showMeLocation(Location location) {
-        if (location == null)
-            return;
-        if (location.getProvider().equals(LocationManager.GPS_PROVIDER)) {
-            tvCurrGeo.setText(locationGPS);
-        } else if (location.getProvider().equals(
-                LocationManager.NETWORK_PROVIDER)) {
-            tvCurrGeo.setText(locationNet);
-        }
-    }
-
-    private String formatLocation(Location location) {
-        if (location == null)
-            return "";
-        return String.format(
-                "Coordinates: lat = %1$.4f, lon = %2$.4f, time = %3$tF %3$tT",
-                location.getLatitude(), location.getLongitude(), new Date(
-                        location.getTime()));
-    }
-
-    private void checkEnabled() {
-        tvStatusGPS.setText("Enabled: "
-                + locationManager
-                .isProviderEnabled(LocationManager.GPS_PROVIDER));
-        tvStatusNet.setText("Enabled: "
-                + locationManager
-                .isProviderEnabled(LocationManager.NETWORK_PROVIDER));
-    }
-
-    public void onClickLocationSettings(View view) {
-        startActivity(new Intent(
-                android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-    };
 
     public void onClickGetGeo(View view) {
-
-        showMeLocation(new Location(LocationManager.NETWORK_PROVIDER));
+        showCurrentLocation();
     }
+
+
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
